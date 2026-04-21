@@ -129,14 +129,16 @@ class DataSDK {
 window.dataSdk = new DataSDK(WEB_APP_URL);
 
 // ==================== ELEMENT SDK PLACEHOLDER ====================
+// Di database-config.js
 window.elementSdk = {
   init: (config) => {
-    console.log('[ElementSDK] Initialized (placeholder)', config);
+    console.log('[ElementSDK] Initialized', config);
     return { isOk: true };
   },
   setConfig: (config) => {
-    console.log('[ElementSDK] Config updated (placeholder)', config);
-  },
+    console.log('[ElementSDK] Config updated', config);
+  }
+};
   getConfig: () => {
     return {
       app_title: 'HRIS Pro',
