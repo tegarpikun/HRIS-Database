@@ -269,53 +269,87 @@
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="app.js"></script>
-  <script src="components.js"></script>
-  <script>
-    // Tampilkan status koneksi database
-    function showDBStatus(message, isError = false) {
-      const statusDiv = document.getElementById('db-status');
-      if (statusDiv) {
-        const bgDiv = statusDiv.querySelector('.bg-yellow-500');
-        if (bgDiv) {
-          bgDiv.className = isError ? 'bg-red-500 text-white text-center py-1 text-xs font-medium' : 'bg-green-500 text-white text-center py-1 text-xs font-medium';
-          bgDiv.textContent = message;
-        }
-        statusDiv.classList.remove('hidden');
-        setTimeout(() => statusDiv.classList.add('hidden'), 3000);
+ <script src="database-config.js"></script>
+
+<script src="components.js"></script>
+
+<script src="app.js"></script>
+
+<script>
+  /**
+   * Menampilkan indikator status koneksi ke user
+   */
+  function showDBStatus(message, isError = false) {
+    const statusDiv = document.getElementById('db-status');
+    if (statusDiv) {
+      // Mencari div di dalam container db-status untuk diwarnai
+      const statusBanner = statusDiv.querySelector('div');
+      if (statusBanner) {
+        // Reset class dan terapkan warna baru
+        statusBanner.className = isError 
+          ? 'bg-red-600 text-white text-center py-2 text-xs font-bold shadow-lg' 
+          : 'bg-green-600 text-white text-center py-2 text-xs font-bold shadow-lg';
+        statusBanner.textContent = message;
+      }
+      
+      statusDiv.classList.remove('hidden');
+      
+      // Jika sukses, sembunyikan otomatis setelah 3 detik
+      // Jika error, biarkan tetap muncul agar user bisa baca
+      if (!isError) {
+        setTimeout(() => {
+          statusDiv.classList.add('hidden');
+        }, 3000);
       }
     }
-    
-    // Inisialisasi aplikasi
-    (async () => {
-      try {
-        // Cek koneksi ke database
-        console.log('Menghubungkan ke Google Sheets Database...');
-        showDBStatus('Menghubungkan ke database...');
-        
-        if (!window.dataSdk || !window.dataSdk.apiUrl) {
-          throw new Error('DataSDK tidak terkonfigurasi. Pastikan database-config.js sudah diisi dengan URL yang benar.');
-        }
-        
-        console.log('Database URL:', window.dataSdk.apiUrl);
-        
-        await window.initApp();
-        
-        console.log('HRIS Connected to Google Sheets Backend');
-        showDBStatus('Database terhubung!', false);
-      } catch (error) {
-        console.error('Gagal koneksi ke database:', error);
-        showDBStatus('Gagal koneksi ke database! Periksa URL Web App dan deploy ulang jika perlu', true);
-        
-        // Tampilkan pesan error di login screen
-        const errorDiv = document.getElementById('login-error');
-        if (errorDiv) {
-          errorDiv.textContent = '⚠️ Gagal terhubung ke database.\n\nPastikan:\n1. URL di database-config.js sudah benar\n2. Web App sudah di-deploy\n3. Akses Web App diatur ke "Anyone"\n\nError: ' + error.message;
-          errorDiv.classList.remove('hidden');
-        }
+  }
+
+  /**
+   * Inisialisasi Aplikasi secara aman setelah semua file script dimuat
+   */
+  window.addEventListener('load', async () => {
+    try {
+      console.log('🔄 Memulai koneksi ke Google Sheets Backend...');
+      showDBStatus('Sedang menghubungkan ke database...');
+
+      // Validasi SDK
+      if (!window.dataSdk || !window.dataSdk.apiUrl || window.dataSdk.apiUrl.includes('YOUR_SCRIPT_ID')) {
+        throw new Error('URL API Database belum diatur di database-config.js');
       }
-    })();
-  </script>
+
+      // Jalankan fungsi inisialisasi dari app.js
+      if (typeof window.initApp === 'function') {
+        await window.initApp();
+        console.log('✅ HRIS System Ready');
+        showDBStatus('Sistem Siap!', false);
+      } else {
+        throw new Error('Fungsi initApp tidak ditemukan di app.js');
+      }
+
+    } catch (error) {
+      console.error('❌ Inisialisasi Gagal:', error);
+      showDBStatus('Gagal Terhubung: ' + error.message, true);
+
+      // Tampilkan detail error pada panel login agar user tahu apa yang salah
+      const errorDiv = document.getElementById('login-error');
+      if (errorDiv) {
+        errorDiv.innerHTML = `
+          <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <strong>⚠️ Masalah Koneksi Database</strong><br>
+            ${error.message}<br><br>
+            <small>Pastikan Google Apps Script sudah di-deploy sebagai Web App dan akses diatur ke "Anyone".</small>
+          </div>
+        `;
+        errorDiv.classList.remove('hidden');
+      }
+      
+      // Pastikan layar login tetap muncul meskipun data gagal dimuat (agar tidak blank putih)
+      const loginScreen = document.getElementById('login-screen');
+      if (loginScreen) loginScreen.classList.remove('hidden');
+      const appContainer = document.getElementById('app');
+      if (appContainer) appContainer.classList.add('hidden');
+    }
+  });
+</script>
 </body>
 </html>
