@@ -269,10 +269,8 @@
     </div>
   </div>
 
- <script src="database-config.js"></script>
-
+<script src="database-config.js"></script>
 <script src="components.js"></script>
-
 <script src="app.js"></script>
 
 <script>
@@ -282,72 +280,77 @@
   function showDBStatus(message, isError = false) {
     const statusDiv = document.getElementById('db-status');
     if (statusDiv) {
-      // Mencari div di dalam container db-status untuk diwarnai
       const statusBanner = statusDiv.querySelector('div');
       if (statusBanner) {
-        // Reset class dan terapkan warna baru
+        // Menggunakan class Tailwind untuk konsistensi warna
         statusBanner.className = isError 
           ? 'bg-red-600 text-white text-center py-2 text-xs font-bold shadow-lg' 
           : 'bg-green-600 text-white text-center py-2 text-xs font-bold shadow-lg';
         statusBanner.textContent = message;
       }
-      
       statusDiv.classList.remove('hidden');
-      
-      // Jika sukses, sembunyikan otomatis setelah 3 detik
-      // Jika error, biarkan tetap muncul agar user bisa baca
       if (!isError) {
-        setTimeout(() => {
-          statusDiv.classList.add('hidden');
-        }, 3000);
+        setTimeout(() => statusDiv.classList.add('hidden'), 3000);
       }
     }
   }
 
   /**
-   * Inisialisasi Aplikasi secara aman setelah semua file script dimuat
+   * Inisialisasi Aplikasi
    */
   window.addEventListener('load', async () => {
+    // Referensi elemen UI untuk mencegah blank screen
+    const loginScreen = document.getElementById('login-screen');
+    const appContainer = document.getElementById('app');
+    const errorDiv = document.getElementById('login-error');
+
     try {
       console.log('🔄 Memulai koneksi ke Google Sheets Backend...');
       showDBStatus('Sedang menghubungkan ke database...');
 
-      // Validasi SDK
-      if (!window.dataSdk || !window.dataSdk.apiUrl || window.dataSdk.apiUrl.includes('YOUR_SCRIPT_ID')) {
-        throw new Error('URL API Database belum diatur di database-config.js');
+      // 1. Validasi keberadaan SDK
+      if (!window.dataSdk || !window.dataSdk.apiUrl) {
+        throw new Error('Konfigurasi database (DataSDK) tidak ditemukan. Cek file database-config.js.');
       }
 
-      // Jalankan fungsi inisialisasi dari app.js
+      // 2. Cek apakah URL masih default (Belum diisi ID)
+      if (window.dataSdk.apiUrl.includes('YOUR_SCRIPT_ID')) {
+        throw new Error('URL API Database belum diatur. Harap masukkan URL Web App yang benar.');
+      }
+
+      // 3. Jalankan fungsi utama dari app.js
       if (typeof window.initApp === 'function') {
         await window.initApp();
         console.log('✅ HRIS System Ready');
         showDBStatus('Sistem Siap!', false);
       } else {
-        throw new Error('Fungsi initApp tidak ditemukan di app.js');
+        throw new Error('Fungsi initApp tidak ditemukan. Pastikan file app.js termuat dengan benar.');
       }
 
     } catch (error) {
       console.error('❌ Inisialisasi Gagal:', error);
-      showDBStatus('Gagal Terhubung: ' + error.message, true);
+      showDBStatus('Gagal Terhubung!', true);
 
-      // Tampilkan detail error pada panel login agar user tahu apa yang salah
-      const errorDiv = document.getElementById('login-error');
+      // Pastikan layar tidak putih: Sembunyikan dashboard, tampilkan login
+      if (appContainer) appContainer.classList.add('hidden');
+      if (loginScreen) loginScreen.classList.remove('hidden');
+
+      // Tampilkan detail error pada panel login
       if (errorDiv) {
         errorDiv.innerHTML = `
           <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            <strong>⚠️ Masalah Koneksi Database</strong><br>
-            ${error.message}<br><br>
-            <small>Pastikan Google Apps Script sudah di-deploy sebagai Web App dan akses diatur ke "Anyone".</small>
+            <div class="font-bold flex items-center mb-1">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+              Gagal Terhubung Database
+            </div>
+            <p class="text-xs">${error.message}</p>
+            <div class="mt-2 pt-2 border-t border-red-100 text-[10px] uppercase font-semibold">
+              Solusi: Cek URL di database-config.js & Pastikan Deploy sebagai "Anyone"
+            </div>
           </div>
         `;
         errorDiv.classList.remove('hidden');
       }
-      
-      // Pastikan layar login tetap muncul meskipun data gagal dimuat (agar tidak blank putih)
-      const loginScreen = document.getElementById('login-screen');
-      if (loginScreen) loginScreen.classList.remove('hidden');
-      const appContainer = document.getElementById('app');
-      if (appContainer) appContainer.classList.add('hidden');
     }
   });
 </script>
