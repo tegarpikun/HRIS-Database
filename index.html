@@ -270,89 +270,84 @@
   </div>
 
 <script src="database-config.js"></script>
-<script src="components.js"></script>
-<script src="app.js"></script>
+  <script src="components.js"></script>
+  <script src="app.js"></script>
 
-<script>
-  /**
-   * Menampilkan indikator status koneksi ke user
-   */
-  function showDBStatus(message, isError = false) {
-    const statusDiv = document.getElementById('db-status');
-    if (statusDiv) {
-      const statusBanner = statusDiv.querySelector('div');
-      if (statusBanner) {
-        // Menggunakan class Tailwind untuk konsistensi warna
-        statusBanner.className = isError 
-          ? 'bg-red-600 text-white text-center py-2 text-xs font-bold shadow-lg' 
-          : 'bg-green-600 text-white text-center py-2 text-xs font-bold shadow-lg';
-        statusBanner.textContent = message;
-      }
-      statusDiv.classList.remove('hidden');
-      if (!isError) {
-        setTimeout(() => statusDiv.classList.add('hidden'), 3000);
-      }
-    }
-  }
-
-  /**
-   * Inisialisasi Aplikasi
-   */
-  window.addEventListener('load', async () => {
-    // Referensi elemen UI untuk mencegah blank screen
-    const loginScreen = document.getElementById('login-screen');
-    const appContainer = document.getElementById('app');
-    const errorDiv = document.getElementById('login-error');
-
-    try {
-      console.log('🔄 Memulai koneksi ke Google Sheets Backend...');
-      showDBStatus('Sedang menghubungkan ke database...');
-
-      // 1. Validasi keberadaan SDK
-      if (!window.dataSdk || !window.dataSdk.apiUrl) {
-        throw new Error('Konfigurasi database (DataSDK) tidak ditemukan. Cek file database-config.js.');
-      }
-
-      // 2. Cek apakah URL masih default (Belum diisi ID)
-      if (window.dataSdk.apiUrl.includes('YOUR_SCRIPT_ID')) {
-        throw new Error('URL API Database belum diatur. Harap masukkan URL Web App yang benar.');
-      }
-
-      // 3. Jalankan fungsi utama dari app.js
-      if (typeof window.initApp === 'function') {
-        await window.initApp();
-        console.log('✅ HRIS System Ready');
-        showDBStatus('Sistem Siap!', false);
-      } else {
-        throw new Error('Fungsi initApp tidak ditemukan. Pastikan file app.js termuat dengan benar.');
-      }
-
-    } catch (error) {
-      console.error('❌ Inisialisasi Gagal:', error);
-      showDBStatus('Gagal Terhubung!', true);
-
-      // Pastikan layar tidak putih: Sembunyikan dashboard, tampilkan login
-      if (appContainer) appContainer.classList.add('hidden');
-      if (loginScreen) loginScreen.classList.remove('hidden');
-
-      // Tampilkan detail error pada panel login
-      if (errorDiv) {
-        errorDiv.innerHTML = `
-          <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            <div class="font-bold flex items-center mb-1">
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-              Gagal Terhubung Database
-            </div>
-            <p class="text-xs">${error.message}</p>
-            <div class="mt-2 pt-2 border-t border-red-100 text-[10px] uppercase font-semibold">
-              Solusi: Cek URL di database-config.js & Pastikan Deploy sebagai "Anyone"
-            </div>
-          </div>
-        `;
-        errorDiv.classList.remove('hidden');
+  <script>
+    /**
+     * Menampilkan indikator status koneksi ke user
+     */
+    function showDBStatus(message, isError = false) {
+      const statusDiv = document.getElementById('db-status');
+      if (statusDiv) {
+        const statusBanner = statusDiv.querySelector('div');
+        if (statusBanner) {
+          statusBanner.className = isError 
+            ? 'bg-red-600 text-white text-center py-2 text-xs font-bold shadow-lg' 
+            : 'bg-green-600 text-white text-center py-2 text-xs font-bold shadow-lg';
+          statusBanner.textContent = message;
+        }
+        statusDiv.classList.remove('hidden');
+        if (!isError) {
+          setTimeout(() => statusDiv.classList.add('hidden'), 3000);
+        }
       }
     }
-  });
-</script>
+
+    /**
+     * Logic utama untuk menjalankan aplikasi secara aman
+     */
+    window.addEventListener('load', async () => {
+      const loginScreen = document.getElementById('login-screen');
+      const appContainer = document.getElementById('app');
+      const errorDiv = document.getElementById('login-error');
+
+      try {
+        console.log('🔄 Memulai HRIS...');
+        showDBStatus('Menghubungkan ke database...');
+
+        // 1. Validasi keberadaan file database-config.js
+        if (!window.dataSdk || !window.dataSdk.apiUrl) {
+          throw new Error('DataSDK gagal dimuat. Pastikan file database-config.js ada.');
+        }
+
+        // 2. Cek apakah URL masih bawaan (default)
+        if (window.dataSdk.apiUrl.includes('YOUR_SCRIPT_ID')) {
+          throw new Error('URL API Database belum diisi di database-config.js');
+        }
+
+        // 3. Panggil initApp yang ada di app.js
+        if (typeof window.initApp === 'function') {
+          await window.initApp();
+          console.log('✅ HRIS System Ready');
+          showDBStatus('Sistem Siap!', false);
+        } else {
+          throw new Error('Fungsi initApp tidak ditemukan. Cek urutan pemanggilan app.js');
+        }
+
+      } catch (error) {
+        console.error('❌ Fatal Error:', error);
+        showDBStatus('Gagal Terhubung!', true);
+
+        // Mencegah layar putih: Paksa tampilkan login screen jika error
+        if (appContainer) appContainer.classList.add('hidden');
+        if (loginScreen) loginScreen.classList.remove('hidden');
+
+        // Berikan pesan error yang membantu di layar login
+        if (errorDiv) {
+          errorDiv.innerHTML = `
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">
+              <p class="font-bold mb-1">⚠️ Gagal Memuat Aplikasi</p>
+              <p>${error.message}</p>
+              <div class="mt-2 text-[10px] text-red-500 uppercase font-mono">
+                Saran: Refresh (F5) atau periksa URL Web App Anda.
+              </div>
+            </div>
+          `;
+          errorDiv.classList.remove('hidden');
+        }
+      }
+    });
+  </script>
 </body>
 </html>
