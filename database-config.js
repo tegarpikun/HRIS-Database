@@ -1,7 +1,7 @@
 // ==================== KONFIGURASI DATABASE ====================
 // Ganti dengan URL Web App Anda setelah deploy Google Apps Script
 // Contoh: 'https://script.google.com/macros/s/ABC123XYZ/exec'
-const WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxFDOU4cPG1bQTV_060SFDxxa6N6szWD8kbzfdyHIQNnKtNxf66L-KSmiIrxWGBXnCh/exec';
 
 // ==================== DATA SDK WRAPPER ====================
 class DataSDK {
